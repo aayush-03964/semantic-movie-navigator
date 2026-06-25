@@ -1,22 +1,32 @@
 # 🎬 Semantic Movie Navigator
 
-A high-performance semantic search engine for personalized movie recommendations.
+A high-performance semantic search engine for personalized movie recommendations 
+using vector embeddings instead of keyword matching.
 
 ## 🚀 Overview
-The application bridges the gap between user intent and database exploration.
+Bridges the gap between user intent and movie discovery. Search naturally — 
+"mind-bending sci-fi with a twist ending" — and get semantically relevant results.
 
 ## 🛠️ System Architecture
-* **Vectorization Engine:** Transforms raw user input into numerical vectors.
-* **Semantic Database:** Utilizes **ChromaDB** for efficient searches.
-* **API Gateway:** A robust **FastAPI/Flask** backend.
-* **Modern Frontend:** A responsive interface.
+- **Vectorization Engine:** Sentence Transformers (all-MiniLM-L6-v2) transforms 
+  user queries into dense vector representations
+- **Semantic Database:** ChromaDB for efficient vector similarity search
+- **API Gateway:** Async FastAPI backend
+- **Frontend:** Vanilla JS + Tailwind CSS
 
-## 📊 Performance & Search Methodology
-* **Contextual Understanding:** Unlike standard SQL-based search, this engine understands intent.
-* **Latency Optimization:** Cached retrieval ensures sub-second response times.
+## 📊 How It Works
+Unlike standard keyword search, this engine understands intent via cosine similarity 
+between query and movie description embeddings. 1000+ movies indexed from TMDB API.
 
 ## 💻 Tech Stack
-* **Language:** Python
-* **Machine Learning/NLP:** Sentence-Transformers, ChromaDB
-* **Backend:** FastAPI / Flask
-* **Frontend:** React / Streamlit
+- **Language:** Python
+- **ML/NLP:** Sentence-Transformers (all-MiniLM-L6-v2), ChromaDB
+- **Backend:** FastAPI
+- **Frontend:** Vanilla JS, Tailwind CSS
+- **Data:** TMDB API
+
+## ⚙️ Setup
+```bash
+pip install -r requirements.txt
+```
+Create a `.env` file:
