@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Movie Navigator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Deep Space Radial Gradient for professional depth */
+            background: radial-gradient(circle at 50% -20%, #1e293b 0%, #000000 80%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .movie-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .movie-card:hover {
+            border-color: rgba(6, 182, 212, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.2);
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-6xl mx-auto px-4 py-16">
+        <header class="text-center mb-16">
+            <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-6">
+                Semantic Movie Navigator
+            </h1>
+            <p class="text-slate-400 font-light text-lg max-w-2xl mx-auto leading-relaxed">
+                An intelligent movie discovery platform. Describe the story, themes, or atmosphere you have in mind, and let our semantic engine find your next perfect watch.
+            </p>
+        </header>
+
+        <div class="max-w-2xl mx-auto mb-16">
+            <form id="searchForm" class="flex gap-3">
+                <input 
+                    type="text" 
+                    id="queryInput" 
+                    placeholder="e.g., 'a story about a lonely robot in space'..." 
+                    class="w-full px-6 py-4 rounded-2xl bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+                    required
+                >
+                <button 
+                    type="submit" 
+                    class="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 font-semibold rounded-2xl transition-all shadow-lg shadow-cyan-900/20"
+                >
+                    Search
+                </button>
+            </form>
+            <div id="loading" class="hidden text-center mt-6 text-cyan-400 text-sm animate-pulse">
+                Analyzing semantic space...
+            </div>
+        </div>
+
+        <main>
+            <div id="movieGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"></div>
+            <div id="emptyState" class="text-center text-slate-500 mt-20">
+                <p>Waiting for your input...</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // DOM Elements selection for state management
+        const searchForm = document.getElementById('searchForm');
+        const queryInput = document.getElementById('queryInput');
+        const movieGrid = document.getElementById('movieGrid');
+        const loadingElement = document.getElementById('loading');
+        const emptyState = document.getElementById('emptyState');
+
+        searchForm.addEventListener('submit', async (e) => {
+            // Prevent standard form submission to stay on the page
+            e.preventDefault();
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            // Prepare UI state for new search
+            loadingElement.classList.remove('hidden');
+            movieGrid.innerHTML = '';
+            emptyState.classList.add('hidden');
+
+            try {
+                // Fetch request to the FastAPI recommendation endpoint
+                const response = await fetch(`http://127.0.0.1:8000/api/v1/movies/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, limit: 8 })
+                });
+                
+                const data = await response.json();
+                loadingElement.classList.add('hidden');
+
+                // Extract data from the vector database response
+                const documents = data.documents ? data.documents[0] : [];
+                const metadatas = data.metadatas ? data.metadatas[0] : [];
+
+                // Handle scenarios where no semantic matches are found
+                if (!metadatas || metadatas.length === 0) {
+                    emptyState.innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-xl font-semibold text-slate-300">No matches found for "${query}"</p>
+                            <p class="text-slate-500">Try adjusting your keywords or describe a different mood, genre, or theme.</p>
+                        </div>
+                    `;
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                // Iterate through results and dynamically generate movie cards
+                metadatas.forEach((meta, index) => {
+                    const cardHTML = `
+                        <div class="movie-card rounded-2xl overflow-hidden border border-slate-700/50 flex flex-col">
+                            <div class="relative aspect-[2/3]">
+                                <img src="${meta.poster_path ? 'https://image.tmdb.org/t/p/w500'+meta.poster_path : 'https://via.placeholder.com/500x750'}" class="w-full h-full object-cover">
+                                <div class="absolute top-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded-lg text-xs font-bold text-amber-400">
+                                    ★ ${meta.vote_average ? meta.vote_average.toFixed(1) : 'N/A'}
+                                </div>
+                            </div>
+                            <div class="p-5 flex-1">
+                                <h3 class="font-bold text-white text-lg mb-2 line-clamp-1">${meta.title}</h3>
+                                <p class="text-sm text-slate-400 line-clamp-3 leading-relaxed font-light">${documents[index]}</p>
+                            </div>
+                        </div>
+                    `;
+                    movieGrid.insertAdjacentHTML('beforeend', cardHTML);
+                });
+            } catch (err) {
+                // Graceful error handling for connection issues
+                loadingElement.classList.add('hidden');
+                emptyState.innerHTML = `<p class="text-rose-400">Error connecting to the recommendation server. Please ensure the backend is running.</p>`;
+                emptyState.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
