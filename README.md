@@ -30,3 +30,8 @@ between query and movie description embeddings. 1000+ movies indexed from TMDB A
 pip install -r requirements.txt
 ```
 Create a `.env` file:
+TMDB_API_KEY=your_key_here
+Run:
+```bash
+uvicorn main:app --reload
+```
